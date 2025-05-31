@@ -7,5 +7,8 @@ class EstacionSismologica:
     def getNombre(self):
         return self.nombre
 
+    def obtenerIdentificadorSismografo(self):
+        return self.getSismografo().getIdentificador()
+
     def getSismografo(self):
         return self.sismografo

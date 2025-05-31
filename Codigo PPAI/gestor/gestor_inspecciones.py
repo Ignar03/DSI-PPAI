@@ -1,15 +1,37 @@
+from data.sesion import actualSesion
+from data.ordenes import ordenes
 
 class GestorInspecciones:
     # Clase Control según diagrama de secuencia
-    def __init__(self, ordenes, legajo_usuario):
+    def __init__(self, intefaz):
+        self.actualizacionSismografo = ""
+        self.motivos = []
         self.ordenes = ordenes
         self.ordenSeleccionada = None
         self.observacionCierre = ""
-        self.motivos = []
-        self.legajo_usuario = legajo_usuario
+        self.interfaz = intefaz
 
-    def buscarOrdenesInspeccion(self):
-        return [o for o in self.ordenes if o.esFinalizada() and o.sosDeRI(self.legajo_usuario)]
+        empleadoLogueado = self.buscarEmpleadoLogueado()
+        ordenesCompRealizadas = self.buscarOrdenesInspeccion(empleadoLogueado)
+        self.mostrarOrdCompRealizadas(ordenesCompRealizadas)
+
+    def buscarEmpleadoLogueado(self):
+        usuarioActual = actualSesion.getUsuarioActual()
+        empleadoLogueado = usuarioActual.obtenerEmpleado()
+
+        return empleadoLogueado
+
+    def buscarOrdenesInspeccion(self, empleado):      
+        ordenesSinOrdenar = [o for o in self.ordenes if o.sosCompletamenteRealizada() and o.sosDeEmpleado(empleado.legajo)]
+        ordenesOrdenadas = self.ordenarPorFechaDeFinalizacion(ordenesSinOrdenar)
+        return ordenesOrdenadas
+
+    def ordenarPorFechaDeFinalizacion(self, ordenesSinOrdenar):
+        ordenesOrdenadas = sorted(ordenesSinOrdenar, key=lambda o: o.fechaFinalizacion)
+        return ordenesOrdenadas
+
+    def mostrarOrdCompRealizadas(self, ordenes):
+        self.interfaz.mostrarOrdCompRealizadas(ordenes)
 
     def seleccionarOrdenInspeccion(self, id_orden):
         for o in self.ordenes:

@@ -18,11 +18,11 @@ class App:
 
         self.app.mainloop()
     
-    def mostrarInterfaz(self, interfaz, gestor, titulo):
+    def mostrarInterfaz(self, interfaz, titulo):
         for widget in self.frame_contenido.winfo_children():
             widget.destroy()
 
-        nueva_interfaz = interfaz(self.frame_contenido, gestor)
+        nueva_interfaz = interfaz(self.frame_contenido)
         nueva_interfaz.pack(fill=tk.BOTH, expand=True)
 
         self.cambiarTitulo(titulo)

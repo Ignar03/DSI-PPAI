@@ -3,22 +3,31 @@ from datetime import datetime
 from .cambio_estado import CambioEstado
 
 class OrdenDeInspeccion:
-    def __init__(self, id, estado, empleado, estacion):
+    def __init__(self, id, estado, empleado, estacion, fechaFinalizacion):
         self.id = id
         self.estado = estado
         self.empleado = empleado
         self.estacion = estacion
         self.observacion = ""
         self.motivosCierre = []
-        self.fechaFinalizacion = None
+        self.fechaFinalizacion = fechaFinalizacion
         self.fechaCierre = None
         self.historialEstados = []
 
-    def sosDeRI(self, legajo):
-        return self.empleado.legajo == legajo
+    def sosDeEmpleado(self, legajo):
+        return self.empleado.getLegajo() == legajo
+    
+    def obtenerFechaFinalizacion(self):
+        return self.fechaFinalizacion
+    
+    def obtenerEstacionSismologica(self):
+        return self.estacion.getNombre()
+    
+    def obtenerIdentificadorSismografo(self):
+        return self.estacion.obtenerIdentificadorSismografo()
 
-    def esFinalizada(self):
-        return self.estado.getNombre() == "Finalizada"
+    def sosCompletamenteRealizada(self):
+        return self.estado.getNombre() == "Completamente Realizada"
 
     def esCerrada(self):
         return self.estado.esCerrada()

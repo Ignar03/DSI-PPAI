@@ -2,8 +2,8 @@ class Estado:
     def __init__(self, nombre):
         self.nombre = nombre
 
-    def esFinalizada(self):
-        return self.nombre == "Finalizada"
+    def sosCompletamenteRealizada(self):
+        return self.nombre == "Completamente Realizada"
 
     def esCerrada(self):
         return self.nombre == "Cerrada"

@@ -13,6 +13,5 @@ class Sesion:
     def getFecha(self):
         return self.fechaInicioSesion
 
-sesion = Sesion(1, {"nombre": "Juan"})
-
-print(sesion.getFecha())
+    def cerrarSesion(self):
+        self.fechaFinSesion = datetime.datetime.now()

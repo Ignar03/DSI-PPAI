@@ -14,34 +14,38 @@ MOTIVOS_PREDEFINIDOS = [
 ]
 
 class InterfazInspecciones(tk.Frame):
-    def __init__(self, app, gestor):
+    def __init__(self, app):
         super().__init__(app)
+        
         label = tk.Label(self, text="Ordenes de Inspección", font=("Arial", 18))
         label.pack(pady=20)
 
-        self.gestor = gestor
-        self.tree = ttk.Treeview(self, columns=("ID", "Estación", "Empleado", "Estado"), show="headings")
+        self.tree = ttk.Treeview(self, columns=("ID", "Fecha", "Estacion", "Sismografo"), show="headings")
         self.tree.heading("ID", text="ID Orden", anchor="center")
-        self.tree.heading("Estación", text="Estación Sismológica", anchor="center")
-        self.tree.heading("Empleado", text="Responsable", anchor="center")
-        self.tree.heading("Estado", text="Estado", anchor="center")
+        self.tree.heading("Fecha", text="Fecha Finalización", anchor="center")
+        self.tree.heading("Estacion", text="Estación Sismológica", anchor="center")
+        self.tree.heading("Sismografo", text="Sismógrafo", anchor="center")
         self.tree.column("ID", anchor="center", width=70)
-        self.tree.column("Estación", anchor="center", width=200)
-        self.tree.column("Empleado", anchor="center", width=200)
-        self.tree.column("Estado", anchor="center", width=90)
+        self.tree.column("Fecha", anchor="center", width=200)
+        self.tree.column("Estacion", anchor="center", width=200)
+        self.tree.column("Sismografo", anchor="center", width=90)
         self.tree.pack(padx=10, pady=10, fill=tk.X)
         self.btn_seleccionar = tk.Button(self, text="Cerrar orden seleccionada", command=self.selOpcCerrarOrdInspeccion)
         self.btn_seleccionar.pack(pady=10)
-        self.cargarOrdenesInspeccion()
+        
+        self.gestor = GestorInspecciones(self)
 
-    def cargarOrdenesInspeccion(self):
+    def mostrarOrdCompRealizadas(self, ordenes):
         self.tree.delete(*self.tree.get_children())
-        ordenes = self.gestor.buscarOrdenesInspeccion()
+        
         for orden in ordenes:
-            self.tree.insert("", "end", values=(orden.id, orden.estacion.getNombre(), orden.empleado.getNombre(), orden.estado.getNombre()))
+            self.tree.insert("", "end", values=(orden.id, orden.obtenerFechaFinalizacion(), orden.obtenerEstacionSismologica(), orden.obtenerIdentificadorSismografo()))
 
+    # Este método refresca la tabla cuando termina el CU ¿Será necesario?
+    # Si fuera necesario, hay que implementarlo bien
     def refrescarTabla(self):
-        self.cargarOrdenesInspeccion()
+        # self.mostrarOrdCompRealizadas()
+        return
 
     def selOpcCerrarOrdInspeccion(self):
         seleccion = self.tree.selection()
