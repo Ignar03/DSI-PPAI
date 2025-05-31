@@ -1,8 +1,8 @@
 
 from .estado import Estado
 from .empleado import Empleado
-from .estacionSismologica import EstacionSismologica
-from .ordenDeInspeccion import OrdenDeInspeccion
-from .motivoTipo import MotivoTipo
+from .estacion_sismologica import EstacionSismologica
+from .orden_inspeccion import OrdenDeInspeccion
+from .motivo_tipo import MotivoTipo
 from .sismografo import Sismografo
-from .cambioEstado import CambioEstado
+from .cambio_estado import CambioEstado

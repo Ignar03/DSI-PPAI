@@ -1,23 +1,14 @@
+
 class Sismografo:
-    def __init__(self, identificadorSismografo, fechaAdquisicion=None, nroSerie=None):
-        self.fechaAdquisicion = fechaAdquisicion    # Fecha de adquisición del sismógrafo
-        self.identificadorSismografo = identificadorSismografo
-        self.nroSerie = nroSerie
-        self.estadoActual = "On-line"               # Atributo extra, útil para control
+    def __init__(self, identificador):
+        self.identificador = identificador
+        self.estado = "On-line"
 
+    def getIdentificador(self):
+        return self.identificador
 
-    def getIdentificadorSismografo(self):
-        return self.identificadorSismografo
+    def setEstado(self, estado):
+        self.estado = estado
 
-    def setEstadoActual(self, estado):
-        self.estadoActual = estado
-
-    def cerrarUltimoEstado(self):
-        # Implementación según tus reglas; aquí es un stub
-        pass
-
-    def actualizarFueraServicio(self):
-        self.estadoActual = "Fuera de Servicio"
-
-    def cambiarEstadoFueraServicio(self):
-        self.estadoActual = "Fuera de Servicio"
+    def getEstado(self):
+        return self.estado
