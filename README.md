@@ -1,4 +1,4 @@
 # DSI-PPAI
 
 
-Acá está el codigo del programa para el PPAI de DSI
+Codigo del programa para el PPAI de DSI

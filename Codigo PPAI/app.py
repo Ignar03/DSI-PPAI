@@ -18,7 +18,7 @@ class App:
 
         self.app.mainloop()
     
-    def mostrarInterfaz(self, interfaz, titulo):
+    def habilitarVentana(self, interfaz, titulo):
         for widget in self.frame_contenido.winfo_children():
             widget.destroy()
 

@@ -1,5 +1,6 @@
 from data.sesion import actualSesion
 from data.ordenes import ordenes
+from data.motivos import motivos
 
 class GestorInspecciones:
     # Clase Control según diagrama de secuencia
@@ -33,18 +34,42 @@ class GestorInspecciones:
     def mostrarOrdCompRealizadas(self, ordenes):
         self.interfaz.mostrarOrdCompRealizadas(ordenes)
 
-    def seleccionarOrdenInspeccion(self, id_orden):
+    def tomarOrdenDeInspeccionSeleccionada(self, id_orden):
         for o in self.ordenes:
             if o.id == id_orden:
                 self.ordenSeleccionada = o
                 return o
+            
         return None
 
-    def tomarObservacionCierre(self, texto):
-        self.observacionCierre = texto
+    def pedirObservacion(self):
+        self.interfaz.pedirObservacion()
 
-    def tomarMotivoCierre(self, motivo, comentario):
-        self.motivos.append((motivo, comentario))
+    def tomarObservacion(self, texto):
+        self.observacionCierre = texto
+        
+        self.buscarTipoMotivoFueraDeServicio()
+
+    def buscarTipoMotivoFueraDeServicio(self):
+        descMotivos = []
+        
+        for motivo in motivos:
+            descMotivos.append(motivo.getDescripcion())
+
+        self.mostrarMotivosTipo(descMotivos)
+            
+    def mostrarMotivosTipo(self, descMotivos):
+        self.interfaz.mostrarMotivosTipo(descMotivos)
+        
+    def solicitarSeleccionMotivoFueraDeServicio(self, motivos):
+        self.interfaz.solicitarSeleccionMotivoFueraDeServicio(motivos)
+
+    def tomarMotivosFueraServicio(self, motivos, indiceMotivo):
+        self.motivos.append({"motivo": motivos[indiceMotivo], "comentario": ""})
+        self.interfaz.pedirComentario(motivos, indiceMotivo)
+
+    def tomarComentario(self, indiceMotivo, comentario):
+        self.motivos[indiceMotivo][comentario] = comentario
 
     def validarCierreOrden(self):
         if not self.ordenSeleccionada:

@@ -1,17 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
-from entidades.motivo_tipo import MotivoTipo
 from gestor.gestor_inspecciones import GestorInspecciones
-
-
-MOTIVOS_PREDEFINIDOS = [
-    MotivoTipo("Avería por vibración"),
-    MotivoTipo("Desgaste de componente"),
-    MotivoTipo("Fallo en el sistema de registro"),
-    MotivoTipo("Vandalismo"),
-    MotivoTipo("Fallo en fuente de alimentación")
-]
 
 class InterfazInspecciones(tk.Frame):
     def __init__(self, app):
@@ -30,7 +20,7 @@ class InterfazInspecciones(tk.Frame):
         self.tree.column("Estacion", anchor="center", width=200)
         self.tree.column("Sismografo", anchor="center", width=90)
         self.tree.pack(padx=10, pady=10, fill=tk.X)
-        self.btn_seleccionar = tk.Button(self, text="Cerrar orden seleccionada", command=self.selOpcCerrarOrdInspeccion)
+        self.btn_seleccionar = tk.Button(self, text="Cerrar orden seleccionada", command=self.tomarSeleccionOrdenInspeccion)
         self.btn_seleccionar.pack(pady=10)
         
         self.gestor = GestorInspecciones(self)
@@ -47,22 +37,26 @@ class InterfazInspecciones(tk.Frame):
         # self.mostrarOrdCompRealizadas()
         return
 
-    def selOpcCerrarOrdInspeccion(self):
+    def tomarSeleccionOrdenInspeccion(self):
         seleccion = self.tree.selection()
+        
         if not seleccion:
             messagebox.showwarning("Advertencia", "Seleccione una orden.")
             return
+        
         self.tree_item_id = seleccion[0]
         item = self.tree.item(seleccion)
         id_orden = int(item["values"][0])
-        orden = self.gestor.seleccionarOrdenInspeccion(id_orden)
+
+        orden = self.gestor.tomarOrdenDeInspeccionSeleccionada(id_orden)
+        
         if not orden:
             messagebox.showerror("Error", "Orden no encontrada.")
             return
-        self.orden_actual = orden
-        self.habilitarVentana()
+        
+        self.gestor.pedirObservacion()
 
-    def habilitarVentana(self):
+    def pedirObservacion(self):
         self.win_observacion = tk.Toplevel(self)
         self.win_observacion.title("Observación de cierre")
         self.win_observacion.geometry("500x250")
@@ -72,70 +66,125 @@ class InterfazInspecciones(tk.Frame):
         self.text_observacion.pack(pady=5)
         btn_frame = tk.Frame(self.win_observacion)
         btn_frame.pack(pady=10)
-        tk.Button(btn_frame, text="Aceptar", command=self.tomarOrdenObservacion).pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="Aceptar", command=self.tomarObservacion).pack(side=tk.LEFT, padx=10)
         tk.Button(btn_frame, text="Cancelar", command=self.cancelarCierre).pack(side=tk.LEFT)
 
-    def tomarOrdenObservacion(self):
+    def tomarObservacion(self):
         texto = self.text_observacion.get("1.0", tk.END).strip()
+
         if texto == "":
             messagebox.showwarning("Advertencia", "Debe ingresar una observación de cierre.")
             return
-        self.gestor.tomarObservacionCierre(texto)
+        
+        self.gestor.tomarObservacion(texto)
         self.win_observacion.destroy()
-        self.buscarMotivosCierre()
 
-    def buscarMotivosCierre(self):
+    def mostrarMotivosTipo(self, motivos):
         self.win_motivos = tk.Toplevel(self)
-        self.win_motivos.title(f"Motivos de cierre para orden {self.orden_actual.id}")
+        self.win_motivos.title(f"Motivos de cierre para la orden")
         self.win_motivos.geometry("500x400")
         self.win_motivos.grab_set()
         tk.Label(self.win_motivos, text="Seleccione uno o varios motivos para poner fuera de servicio:").pack(pady=10)
         self.listbox = tk.Listbox(self.win_motivos, selectmode=tk.MULTIPLE, width=60, height=10)
-        for motivo in MOTIVOS_PREDEFINIDOS:
-            self.listbox.insert(tk.END, motivo.getNombre())
+        for motivo in motivos:
+            self.listbox.insert(tk.END, motivo)
+
         self.listbox.pack(pady=10)
         btn_frame = tk.Frame(self.win_motivos)
         btn_frame.pack(pady=10)
-        tk.Button(btn_frame, text="Aceptar", command=self.solicitarMotivoCierre).pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="Aceptar", command=lambda: self.gestor.solicitarSeleccionMotivoFueraDeServicio(motivos)).pack(side=tk.LEFT, padx=10)
         tk.Button(btn_frame, text="Cancelar", command=self.cancelarCierre).pack(side=tk.LEFT)
 
-    def solicitarMotivoCierre(self):
+    # def solicitarSeleccionMotivoFueraDeServicio(self, motivos):
+    #     seleccion_indices = self.listbox.curselection()
+    #     if not seleccion_indices:
+    #         messagebox.showwarning("Advertencia", "Debe seleccionar al menos un motivo.")
+    #         return
+        
+    #     motivosPreseleccionados = [motivos[i] for i in seleccion_indices]
+    #     self.win_motivos.destroy()
+
+    #     indiceMotivo = 0
+    #     self.tomarMotivoFueraDeServicio(motivosPreseleccionados, indiceMotivo)
+
+    # def tomarMotivoFueraDeServicio(self, motivos, indiceMotivo):        
+    #     self.gestor.tomarMotivosFueraServicio(motivos, indiceMotivo)
+        
+    # def pedirComentario(self, motivos, indiceMotivo):
+    #     win_comentario = tk.Toplevel(self)
+    #     win_comentario.title(f"Comentario para motivo: '{motivos[indiceMotivo]}'")
+    #     win_comentario.geometry("500x250")
+    #     win_comentario.grab_set()
+
+    #     tk.Label(win_comentario, text=f"Ingrese comentario para el motivo: '{motivos[indiceMotivo]}'").pack(pady=10)
+
+    #     txt_comentario = tk.Text(win_comentario, width=60, height=6)
+    #     txt_comentario.pack(pady=5)
+
+    #     btn_frame = tk.Frame(win_comentario)
+    #     btn_frame.pack(pady=10)
+
+    #     tk.Button(btn_frame, text="Guardar y siguiente", command=lambda: self.tomarComentario(motivos, indiceMotivo, txt_comentario, win_comentario)).pack(side=tk.LEFT, padx=10)
+    #     tk.Button(btn_frame, text="Cancelar", command=self.cancelarCierre).pack(side=tk.LEFT)
+
+    # def tomarComentario(self, motivos, indiceMotivo, text_widget, win_comentario):
+    #     comentario = text_widget.get("1.0", tk.END).strip()
+    #     win_comentario.destroy()
+
+
+    #     if indiceMotivo < len(motivos):
+    #         self.gestor.tomarComentario(indiceMotivo, comentario)
+    #         indiceMotivo += 1
+    #         self.pedirComentario(motivos, indiceMotivo)
+    #     else:
+    #         self.pedirConfirmacionCierreOrden()  
+
+    def solicitarSeleccionMotivoFueraDeServicio(self, motivos):
         seleccion_indices = self.listbox.curselection()
         if not seleccion_indices:
             messagebox.showwarning("Advertencia", "Debe seleccionar al menos un motivo.")
             return
-        self.motivos_seleccionados = [MOTIVOS_PREDEFINIDOS[i] for i in seleccion_indices]
-        self.win_motivos.destroy()
-        self.indice_actual = 0
-        self.comentarios_motivos = {}
-        self.solicitarComentarioMotivoCierre()
+        
+        motivosPreseleccionados = [motivos[i] for i in seleccion_indices]
 
-    def solicitarComentarioMotivoCierre(self):
-        if self.indice_actual >= len(self.motivos_seleccionados):
-            self.solicitarConfirmacionCierre()
+        self.win_motivos.destroy()
+
+        indiceMotivo = 0
+
+        self.tomarMotivoFueraDeServicio(motivosPreseleccionados, indiceMotivo)
+
+    def tomarMotivoFueraDeServicio(self, motivosPreseleccionados, indiceMotivo):
+
+        print(indiceMotivo)
+
+        if indiceMotivo >= len(motivosPreseleccionados):
+            self.pedirConfirmacionCierreOrden()
             return
-        motivo = self.motivos_seleccionados[self.indice_actual]
-        self.win_comentario = tk.Toplevel(self)
-        self.win_comentario.title(f"Comentario para motivo: {motivo.getNombre()}")
-        self.win_comentario.geometry("500x250")
-        self.win_comentario.grab_set()
-        tk.Label(self.win_comentario, text=f"Ingrese comentario para el motivo:'{motivo.getNombre()}'").pack(pady=10)
-        self.text_comentario = tk.Text(self.win_comentario, width=60, height=6)
-        self.text_comentario.pack(pady=5)
-        btn_frame = tk.Frame(self.win_comentario)
+
+        self.gestor.tomarMotivosFueraServicio(motivosPreseleccionados, indiceMotivo)
+        
+    def pedirComentario(self, motivos, indiceMotivo):
+        win_comentario = tk.Toplevel(self)
+        win_comentario.title(f"Comentario para motivo: {motivos[indiceMotivo]}")
+        win_comentario.geometry("500x250")
+        win_comentario.grab_set()
+        tk.Label(win_comentario, text=f"Ingrese comentario para el motivo:'{motivos[indiceMotivo]}'").pack(pady=10)
+        self.txt_comentarioMotivoDeCierre = tk.Text(win_comentario, width=60, height=6)
+        self.txt_comentarioMotivoDeCierre.pack(pady=5)
+        btn_frame = tk.Frame(win_comentario)
         btn_frame.pack(pady=10)
-        tk.Button(btn_frame, text="Guardar y siguiente", command=self.tomarComentarioMotivoCierre).pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="Guardar y siguiente", command=lambda: self.tomarComentario(motivos, indiceMotivo, win_comentario)).pack(side=tk.LEFT, padx=10)
         tk.Button(btn_frame, text="Cancelar", command=self.cancelarCierre).pack(side=tk.LEFT)
 
-    def tomarComentarioMotivoCierre(self):
-        texto = self.text_comentario.get("1.0", tk.END).strip()
-        motivo = self.motivos_seleccionados[self.indice_actual]
-        self.comentarios_motivos[motivo] = texto
-        self.win_comentario.destroy()
-        self.indice_actual += 1
-        self.solicitarComentarioMotivoCierre()
+    def tomarComentario(self, motivos, indiceMotivo, win_comentario):
+        comentario = self.txt_comentarioMotivoDeCierre.get("1.0", tk.END).strip()
 
-    def solicitarConfirmacionCierre(self):
+        self.gestor.tomarComentario(indiceMotivo, comentario)
+        win_comentario.destroy()
+        indiceMotivo += 1
+        self.tomarMotivoFueraDeServicio(motivos, indiceMotivo)
+
+    def pedirConfirmacionCierreOrden(self):
         respuesta = messagebox.askyesno("Confirmar cierre", "¿Desea confirmar el cierre de la orden?")
         if respuesta:
             self.tomarConfirmacionCierre(True)
