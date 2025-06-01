@@ -32,6 +32,10 @@ class OrdenDeInspeccion:
     def esCerrada(self):
         return self.estado.esCerrada()
 
+    def cerrarOrden(self, fechaCierre, estado):
+        self.fechaCierre = fechaCierre
+        self.estado = estado
+
     def cambiarEstadoCerrado(self, responsable):
         self.estado.nombre = "Cerrada"
         self.crearCambioEstado("Cerrada", responsable)
@@ -42,3 +46,6 @@ class OrdenDeInspeccion:
     def crearCambioEstado(self, estado_nombre, responsable):
         cambio = CambioEstado(estado_nombre, datetime.now(), responsable)
         self.historialEstados.append(cambio)
+
+    def ponerSismografoFueraDeServicio(self, fechaHoraActual, estadoSismografo, empleadoLogueado, motivos):
+        self.estacion.ponerSismografoFueraDeServicio(fechaHoraActual, estadoSismografo, empleadoLogueado, motivos)

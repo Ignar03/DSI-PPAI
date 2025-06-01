@@ -1,6 +1,8 @@
 from data.sesion import actualSesion
 from data.ordenes import ordenes
 from data.motivos import motivos
+from data.estados import estados
+from datetime import datetime
 
 class GestorInspecciones:
     # Clase Control según diagrama de secuencia
@@ -10,10 +12,11 @@ class GestorInspecciones:
         self.ordenes = ordenes
         self.ordenSeleccionada = None
         self.observacionCierre = ""
+        self.fechaHoraActual = ""
         self.interfaz = intefaz
 
-        empleadoLogueado = self.buscarEmpleadoLogueado()
-        ordenesCompRealizadas = self.buscarOrdenesInspeccion(empleadoLogueado)
+        self.empleadoLogueado = self.buscarEmpleadoLogueado()
+        ordenesCompRealizadas = self.buscarOrdenesInspeccion()
         self.mostrarOrdCompRealizadas(ordenesCompRealizadas)
 
     def buscarEmpleadoLogueado(self):
@@ -22,8 +25,8 @@ class GestorInspecciones:
 
         return empleadoLogueado
 
-    def buscarOrdenesInspeccion(self, empleado):      
-        ordenesSinOrdenar = [o for o in self.ordenes if o.sosCompletamenteRealizada() and o.sosDeEmpleado(empleado.legajo)]
+    def buscarOrdenesInspeccion(self):      
+        ordenesSinOrdenar = [o for o in self.ordenes if o.sosCompletamenteRealizada() and o.sosDeEmpleado(self.empleadoLogueado.legajo)]
         ordenesOrdenadas = self.ordenarPorFechaDeFinalizacion(ordenesSinOrdenar)
         return ordenesOrdenadas
 
@@ -62,31 +65,75 @@ class GestorInspecciones:
         self.interfaz.mostrarMotivosTipo(descMotivos)
         
     def solicitarSeleccionMotivoFueraDeServicio(self, motivos):
-        self.interfaz.solicitarSeleccionMotivoFueraDeServicio(motivos)
+        indiceMotivo = 0
+        self.interfaz.solicitarSeleccionMotivoFueraDeServicio(motivos, indiceMotivo)
 
     def tomarMotivosFueraServicio(self, motivos, indiceMotivo):
+        if indiceMotivo >= len(motivos):
+            self.pedirConfirmacionCierreOrden()
+            return
+
         self.motivos.append({"motivo": motivos[indiceMotivo], "comentario": ""})
         self.interfaz.pedirComentario(motivos, indiceMotivo)
 
     def tomarComentario(self, indiceMotivo, comentario):
-        self.motivos[indiceMotivo][comentario] = comentario
+        self.motivos[indiceMotivo]["comentario"] = comentario
 
-    def validarCierreOrden(self):
-        if not self.ordenSeleccionada:
-            return False
-        if not self.observacionCierre.strip():
-            return False
-        if not self.motivos:
-            return False
-        for motivo, comentario in self.motivos:
-            if comentario.strip() == "":
-                return False
-        return True
+    def pedirConfirmacionCierreOrden(self):
+        self.interfaz.pedirConfirmacionCierreOrden()
 
-    def buscarEstadoCerrado(self):
-        if self.ordenSeleccionada:
-            return self.ordenSeleccionada.esCerrada()
-        return False
+    def tomarConfirmacionCierreOrden(self, confirmado):
+        if self.validarExistenciaObservacion():
+            if self.validarExistenciaMotivoTipo():
+                estadoOrden = self.buscarEstadoCerrada()
+
+                self.fechaHoraActual = self.getFechaHoraActual()
+
+                estadoSismografo = self.buscarFueraDeServicio()
+
+                if estadoOrden != None or estadoSismografo != None:
+                    print("Error obteniendo los estados")
+                    return
+                
+                self.cerrarOrdenInspeccion(estadoOrden)
+                self.ponerSismografoFueraDeServicio(estadoSismografo)
+        else:
+            pass
+    
+    def validarExistenciaObservacion(self):
+        if self.observacionCierre == "":
+            return False
+        else:
+            return True
+    
+    def validarExistenciaMotivoTipo(self):
+        if len(self.motivos) == 0:
+            return False
+        else:
+            return True
+
+    def buscarEstadoCerrada(self):
+        for estado in estados:
+            if estado.sosDeOrdenDeInspeccion() and estado.sosCerrada():
+                return estado
+        
+        return None
+
+    def getFechaHoraActual(self):
+        return datetime.now()
+    
+    def buscarFueraDeServicio(self):
+        for estado in estados:
+            if estado.sosDeSismografo() and estado.sosFueraDeServicio():
+                return estado
+        
+        return None
+    
+    def cerrarOrdenInspeccion(self, estadoOrden):
+        self.ordenSeleccionada.cerrarOrden(self.fechaHoraActual, estadoOrden)
+
+    def ponerSismografoFueraDeServicio(self, estadoSismografo):
+        self.ordenSeleccionada.ponerSismografoFueraDeServicio(self.fechaHoraActual, estadoSismografo, self.empleadoLogueado, self.motivos)
 
     def cerrarOrden(self, notificar_mail=True, notificar_monitor=True):
         if not self.validarCierreOrden():

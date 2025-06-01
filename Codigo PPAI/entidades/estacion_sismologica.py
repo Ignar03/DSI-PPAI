@@ -12,3 +12,6 @@ class EstacionSismologica:
 
     def getSismografo(self):
         return self.sismografo
+    
+    def ponerSismografoFueraDeServicio(self, fechaHoraActual, estadoSismografo,empleadoLogueado,motivos):
+        self.sismografo.fueraDeServicio(fechaHoraActual, estadoSismografo,empleadoLogueado, motivos)
