@@ -22,13 +22,6 @@ ordenes = [
 
     ),
     OrdenDeInspeccion(
-        102,
-        estados[0],
-        empleados[1],
-        estaciones[0],
-        datetime.datetime(2025, 4, 5)
-    ),
-    OrdenDeInspeccion(
         103,
         estados[0],
         empleados[1],

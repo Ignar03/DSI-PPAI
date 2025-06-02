@@ -1,5 +1,6 @@
 import tkinter as tk
 from menu.menu import BarraMenu
+from tkinter import PhotoImage
 
 class App:
     def __init__(self, titulo):
@@ -12,13 +13,14 @@ class App:
 
         self.app.state('zoomed')
         self.app.title(titulo)
+        self.app.iconbitmap("./assets/img/favicon.ico")
         self.frame_contenido.pack(fill=tk.BOTH, expand=True)
 
-        self.app.config(menu=self.menu)
+        self.app.config(menu=self.menu) 
 
         self.app.mainloop()
     
-    def habilitarVentana(self, interfaz, titulo):
+    def selOpcCerrarOrdInspeccion(self, interfaz, titulo):
         for widget in self.frame_contenido.winfo_children():
             widget.destroy()
 

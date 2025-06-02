@@ -11,7 +11,7 @@ class BarraMenu(tk.Menu):
         ordenes_menu = tk.Menu(self, tearoff=False)
         ordenes_menu.add_command(
             label="Cerrar orden de inspección", 
-            command=lambda: self.app.habilitarVentana(InterfazInspecciones, "Cerrar Orden de Inspección")
+            command=lambda: self.app.selOpcCerrarOrdInspeccion(InterfazInspecciones, "Cerrar Orden de Inspección")
         )
 
         self.add_cascade(label="Ordenes", menu=ordenes_menu)

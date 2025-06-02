@@ -7,6 +7,12 @@ class InterfazInspecciones(tk.Frame):
     def __init__(self, app):
         super().__init__(app)
         
+        self.habilitarVentana()
+        
+        self.gestor = GestorInspecciones(self)
+
+    def habilitarVentana(self):
+
         label = tk.Label(self, text="Ordenes de Inspección", font=("Arial", 18))
         label.pack(pady=20)
 
@@ -22,20 +28,16 @@ class InterfazInspecciones(tk.Frame):
         self.list_ordenesInspeccion.pack(padx=10, pady=10, fill=tk.X)
         self.btn_seleccionarOrden = tk.Button(self, text="Cerrar orden seleccionada", command=self.tomarSeleccionOrdenInspeccion)
         self.btn_seleccionarOrden.pack(pady=10)
-        
-        self.gestor = GestorInspecciones(self)
 
     def mostrarOrdCompRealizadas(self, ordenes):
         self.list_ordenesInspeccion.delete(*self.list_ordenesInspeccion.get_children())
         
         for orden in ordenes:
-            self.list_ordenesInspeccion.insert("", "end", values=(orden.id, orden.obtenerFechaFinalizacion(), orden.obtenerEstacionSismologica(), orden.obtenerIdentificadorSismografo()))
+            self.list_ordenesInspeccion.insert("", "end", values=(orden["id"], orden["fechaFinalizacion"], orden["estacionSismologica"], orden["sismografoId"]))
 
-    # Este método refresca la tabla cuando termina el CU ¿Será necesario?
-    # Si fuera necesario, hay que implementarlo bien
-    def refrescarTabla(self):
-        # self.mostrarOrdCompRealizadas()
-        return
+    def pedirSeleccionOrdenInspeccion(self):
+        label = tk.Label(self, text="*Por favor seleccione una orden*", font=("Arial", 9), fg="#FF0000")
+        label.pack(pady=20)
 
     def tomarSeleccionOrdenInspeccion(self):
         seleccion = self.list_ordenesInspeccion.selection()
@@ -126,6 +128,7 @@ class InterfazInspecciones(tk.Frame):
     def tomarComentario(self, motivos, indiceMotivo):
         comentario = self.txt_comentarioMotivoDeCierre.get("1.0", tk.END).strip()
         
+        # Validamos aca por una mejor UX 🙏🙏
         if comentario == "":
             messagebox.showwarning("Advertencia", "Debe seleccionar al menos un comentario.")
             self.win_comentario.destroy()
@@ -146,74 +149,17 @@ class InterfazInspecciones(tk.Frame):
             self.tomarConfirmacionCierreOrden(False)
 
     def tomarConfirmacionCierreOrden(self, confirmado):
+        
+        if not confirmado:
+            messagebox.showinfo("Cancelado", "Cierre de orden cancelado.")
+            return
 
-        self.gestor.tomarConfirmacionCierreOrden(confirmado)
+        cerrada = self.gestor.tomarConfirmacionCierreOrden()
 
-        # if confirmado:
-        #     for motivo, comentario in self.comentarios_motivos.items():
-        #         self.gestor.tomarMotivoCierre(motivo, comentario)
-
-        #     if not self.gestor.validarCierreOrden():
-        #         messagebox.showwarning("Atención", "Faltan observación o motivos para cerrar.")
-        #         return
-
-        #     canal = self.seleccionarCanalNotificacion()
-        #     if canal is None:
-        #         messagebox.showinfo("Cancelado", "Cierre de orden cancelado.")
-        #         return
-        #     notificar_mail, notificar_monitor = canal
-
-        #     exito = self.gestor.cerrarOrden(notificar_mail=notificar_mail, notificar_monitor=notificar_monitor)
-        #     if exito:
-        #         self.refrescarTabla()
-        #         messagebox.showinfo("Éxito", "Orden cerrada con éxito.")
-        #         if len(self.gestor.buscarOrdenesInspeccion()) == 0:
-        #             messagebox.showinfo("Información",
-        #                                 "No hay más órdenes de inspección finalizadas asignadas a usted.")
-        #         self.orden_actual = None
-        #         self.list_ordenesInspeccion_item_id = None
-        #     else:
-        #         messagebox.showerror("Error", "Error al cerrar la orden.")
-        # else:
-        #     messagebox.showinfo("Cancelado", "Cierre de orden cancelado.")
-
-    def seleccionarCanalNotificacion(self):
-        ventana = tk.Toplevel(self)
-        ventana.title("Canal de notificación")
-        ventana.geometry("400x200")
-        ventana.grab_set()
-
-        var_mail = tk.BooleanVar(value=True)
-        var_monitor = tk.BooleanVar(value=True)
-
-        resultado = {'valor': None}
-
-        tk.Label(ventana, text="¿Cómo desea notificar el cierre de la orden?").pack(pady=10)
-
-        chk_mail = tk.Checkbutton(ventana, text="Notificar por mail", variable=var_mail)
-        chk_mail.pack()
-        chk_monitor = tk.Checkbutton(ventana, text="Notificar en monitor CCRS", variable=var_monitor)
-        chk_monitor.pack()
-
-        def confirmar():
-            if not var_mail.get() and not var_monitor.get():
-                messagebox.showwarning("Atención", "Seleccione al menos un canal de notificación.")
-                return
-            resultado['valor'] = (var_mail.get(), var_monitor.get())
-            ventana.destroy()
-
-        def cancelar():
-            resultado['valor'] = None
-            ventana.destroy()
-
-        btn_frame = tk.Frame(ventana)
-        btn_frame.pack(pady=10)
-
-        tk.Button(btn_frame, text="Confirmar", command=confirmar).pack(side=tk.LEFT, padx=10)
-        tk.Button(btn_frame, text="Cancelar", command=cancelar).pack(side=tk.LEFT)
-
-        ventana.wait_window()
-        return resultado['valor']
+        if cerrada:
+            messagebox.showinfo("Éxito", "Orden cerrada con éxito. \n\nMails y notificaciones enviadas a los monitores CCRS.")
+        else:
+            messagebox.showerror("Error", "Error al cerrar la orden.")
 
     def cancelarCierre(self):
         if messagebox.askyesno("Cancelar", "¿Está seguro que desea cancelar el cierre de la orden?"):

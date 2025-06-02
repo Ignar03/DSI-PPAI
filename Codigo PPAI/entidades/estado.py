@@ -13,10 +13,10 @@ class Estado:
         return self.nombre == "Fuera de Servicio"
 
     def sosDeOrdenDeInspeccion(self):
-        return self.nombre == "OI"
+        return self.ambito == "OI"
     
     def sosDeSismografo(self):
-        return self.nombre == "S"
+        return self.ambito == "S"
 
     def getNombre(self):
         return self.nombre

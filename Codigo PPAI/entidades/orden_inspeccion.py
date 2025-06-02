@@ -12,11 +12,13 @@ class OrdenDeInspeccion:
         self.motivosCierre = []
         self.fechaFinalizacion = fechaFinalizacion
         self.fechaCierre = None
-        self.historialEstados = []
-
+        
     def sosDeEmpleado(self, legajo):
         return self.empleado.getLegajo() == legajo
     
+    def obtenerNumeroDeOrden(self):
+        return self.id
+
     def obtenerFechaFinalizacion(self):
         return self.fechaFinalizacion
     
@@ -43,9 +45,9 @@ class OrdenDeInspeccion:
     def setFechaHoraCierre(self):
         self.fechaCierre = datetime.now()
 
-    def crearCambioEstado(self, estado_nombre, responsable):
-        cambio = CambioEstado(estado_nombre, datetime.now(), responsable)
-        self.historialEstados.append(cambio)
+    # def crearCambioEstado(self, estado_nombre, responsable):
+    #     cambio = CambioEstado(estado_nombre, datetime.now(), responsable)
+    #     self.historialEstados.append(cambio)
 
     def ponerSismografoFueraDeServicio(self, fechaHoraActual, estadoSismografo, empleadoLogueado, motivos):
         self.estacion.ponerSismografoFueraDeServicio(fechaHoraActual, estadoSismografo, empleadoLogueado, motivos)

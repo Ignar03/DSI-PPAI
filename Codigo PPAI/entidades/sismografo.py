@@ -21,9 +21,6 @@ class Sismografo:
         cambioEstadoActual.setFechaHoraActual(fechaHoraActual)
 
         nuevoCambioEstado = CambioEstado(estadoSismografo, fechaHoraActual, "", empleadoLogueado.getNombre())
-        
-        
-
         nuevoCambioEstado.crearMotivoTipo(motivos)
 
         

@@ -2,18 +2,20 @@ from data.sesion import actualSesion
 from data.ordenes import ordenes
 from data.motivos import motivos
 from data.estados import estados
+from data.empleados import empleados
 from datetime import datetime
+from interfaz.interfaz_notificacion_mail import interfazNotificacionMail
+from interfaz.interfaz_ccrs import interfazCCRS
 
 class GestorInspecciones:
-    # Clase Control según diagrama de secuencia
-    def __init__(self, intefaz):
+    def __init__(self, interfaz):
         self.actualizacionSismografo = ""
         self.motivos = []
         self.ordenes = ordenes
         self.ordenSeleccionada = None
         self.observacionCierre = ""
         self.fechaHoraActual = ""
-        self.interfaz = intefaz
+        self.interfaz = interfaz
 
         self.empleadoLogueado = self.buscarEmpleadoLogueado()
         ordenesCompRealizadas = self.buscarOrdenesInspeccion()
@@ -26,16 +28,28 @@ class GestorInspecciones:
         return empleadoLogueado
 
     def buscarOrdenesInspeccion(self):      
-        ordenesSinOrdenar = [o for o in self.ordenes if o.sosCompletamenteRealizada() and o.sosDeEmpleado(self.empleadoLogueado.legajo)]
+        ordenesSinOrdenar = [] 
+        for o in ordenes: 
+            if o.sosCompletamenteRealizada() and o.sosDeEmpleado(self.empleadoLogueado.legajo):
+                orden = {
+                    "id" : o.obtenerNumeroDeOrden(),
+                    "fechaFinalizacion": o.obtenerFechaFinalizacion(),
+                    "estacionSismologica": o.obtenerEstacionSismologica(),
+                    "sismografoId": o.obtenerIdentificadorSismografo()
+                }
+
+                ordenesSinOrdenar.append(orden)
+
         ordenesOrdenadas = self.ordenarPorFechaDeFinalizacion(ordenesSinOrdenar)
         return ordenesOrdenadas
 
     def ordenarPorFechaDeFinalizacion(self, ordenesSinOrdenar):
-        ordenesOrdenadas = sorted(ordenesSinOrdenar, key=lambda o: o.fechaFinalizacion)
+        ordenesOrdenadas = sorted(ordenesSinOrdenar, key=lambda o: o["fechaFinalizacion"])
         return ordenesOrdenadas
 
     def mostrarOrdCompRealizadas(self, ordenes):
         self.interfaz.mostrarOrdCompRealizadas(ordenes)
+        self.interfaz.pedirSeleccionOrdenInspeccion()
 
     def tomarOrdenDeInspeccionSeleccionada(self, id_orden):
         for o in self.ordenes:
@@ -82,7 +96,7 @@ class GestorInspecciones:
     def pedirConfirmacionCierreOrden(self):
         self.interfaz.pedirConfirmacionCierreOrden()
 
-    def tomarConfirmacionCierreOrden(self, confirmado):
+    def tomarConfirmacionCierreOrden(self):
         if self.validarExistenciaObservacion():
             if self.validarExistenciaMotivoTipo():
                 estadoOrden = self.buscarEstadoCerrada()
@@ -91,14 +105,22 @@ class GestorInspecciones:
 
                 estadoSismografo = self.buscarFueraDeServicio()
 
-                if estadoOrden != None or estadoSismografo != None:
+                if estadoOrden == None or estadoSismografo == None:
                     print("Error obteniendo los estados")
-                    return
+                    return False
                 
                 self.cerrarOrdenInspeccion(estadoOrden)
                 self.ponerSismografoFueraDeServicio(estadoSismografo)
+
+                self.buscarResponsablesReparacion(estadoSismografo)
+
+                self.finCU()
+
+                return True
+            else:
+                return False
         else:
-            pass
+            return False
     
     def validarExistenciaObservacion(self):
         if self.observacionCierre == "":
@@ -120,7 +142,9 @@ class GestorInspecciones:
         return None
 
     def getFechaHoraActual(self):
-        return datetime.now()
+        ahora = datetime.now()
+        return ahora.strftime("%Y-%m-%d %H:%M:%S")
+
     
     def buscarFueraDeServicio(self):
         for estado in estados:
@@ -135,36 +159,43 @@ class GestorInspecciones:
     def ponerSismografoFueraDeServicio(self, estadoSismografo):
         self.ordenSeleccionada.ponerSismografoFueraDeServicio(self.fechaHoraActual, estadoSismografo, self.empleadoLogueado, self.motivos)
 
-    def cerrarOrden(self, notificar_mail=True, notificar_monitor=True):
-        if not self.validarCierreOrden():
-            return False
-        if self.buscarEstadoCerrado():
-            return False
+    def buscarResponsablesReparacion(self, estadoSismografo):
+        mail = ""
+        for empleado in empleados:
+            if empleado.esResponsableReparacion():
+                mail = empleado.obtenerMail()
+                self.enviarCorreo(mail)
+                self.enviarNotificacion(estadoSismografo)
 
-        # Aca se registra fecha/hora, observación, motivos, y se actualiza el estado y el historial.
-        responsable = self.ordenSeleccionada.empleado
-        self.ordenSeleccionada.cambiarEstadoCerrado(responsable)
-        self.ordenSeleccionada.setFechaHoraCierre()
-        self.ordenSeleccionada.observacion = self.observacionCierre
-        self.ordenSeleccionada.motivosCierre = self.motivos
+    def enviarCorreo(self,mail):
+        interfazNotificacionMail.enviarCorreo(mail)
+        
+    def enviarNotificacion(self,estadoSismografo):
+        sismografoId = self.ordenSeleccionada.obtenerIdentificadorSismografo()
+        fecha = self.fechaHoraActual
+        motivos = self.motivos
+        nombreEstado = estadoSismografo.getNombre()
 
-        # Notificaciones
-        if notificar_mail and not notificar_monitor:
-            self.enviarNotificacionEmpleado(self.ordenSeleccionada)
-        elif not notificar_mail and notificar_monitor:
-            self.enviarNotificacionInterfazCCRS(self.ordenSeleccionada)
-        elif notificar_mail and notificar_monitor:
-            self.enviarNotificacionEmpleado(self.ordenSeleccionada)
-            self.enviarNotificacionInterfazCCRS(self.ordenSeleccionada)
-
-        # NO elimina la orden: sólo cambia su estado
+        interfazCCRS.publicarNotificacion(sismografoId, nombreEstado, fecha, motivos )
+    
+    # Actualizamos el arreglo de ordenes para que la orden cerrada ya no se vea reflejada 😀
+    def finCU(self):
+        nuevasOrdenes = self.buscarOrdenesInspeccion()
+        
+        self.actualizacionSismografo = ""
+        self.motivos = []
+        self.ordenes = self.filtrarOrdenes()
         self.ordenSeleccionada = None
         self.observacionCierre = ""
-        self.motivos = []
-        return True
-
-    def enviarNotificacionEmpleado(self, orden):
-        print(f"[NOTIFICACIÓN POR MAIL] Orden {orden.id} cerrada.")
-
-    def enviarNotificacionInterfazCCRS(self, orden):
-        print(f"[NOTIFICACIÓN EN MONITOR CCRS] Orden {orden.id} cerrada.")
+        self.fechaHoraActual = ""
+        
+        self.mostrarOrdCompRealizadas(nuevasOrdenes)
+        print("CU terminado")
+    
+    def filtrarOrdenes(self):
+        ordenesFiltradas = []
+        for orden in self.ordenes:
+            if orden.obtenerNumeroDeOrden() == self.ordenSeleccionada.obtenerNumeroDeOrden():
+                continue
+            ordenesFiltradas.append(orden)
+        return ordenesFiltradas
