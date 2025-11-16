@@ -45,9 +45,10 @@ class OrdenDeInspeccion:
     def setFechaHoraCierre(self):
         self.fechaCierre = datetime.now()
 
-    # def crearCambioEstado(self, estado_nombre, responsable):
-    #     cambio = CambioEstado(estado_nombre, datetime.now(), responsable)
-    #     self.historialEstados.append(cambio)
+    def crearCambioEstado(self, nombreEstado, responsable):
+        # cambio = CambioEstado(nombreEstado, datetime.now(), responsable)
+        # self.historialEstados.append(cambio)
+        pass
 
     def ponerSismografoFueraDeServicio(self, fechaHoraActual, estadoSismografo, empleadoLogueado, motivos):
         self.estacion.ponerSismografoFueraDeServicio(fechaHoraActual, estadoSismografo, empleadoLogueado, motivos)

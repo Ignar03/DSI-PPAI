@@ -48,9 +48,9 @@ class InterfazInspecciones(tk.Frame):
         
         self.list_ordenesInspeccion_item_id = seleccion[0]
         item = self.list_ordenesInspeccion.item(seleccion)
-        id_orden = int(item["values"][0])
+        idOrden = int(item["values"][0])
 
-        orden = self.gestor.tomarOrdenDeInspeccionSeleccionada(id_orden)
+        orden = self.gestor.tomarOrdenDeInspeccionSeleccionada(idOrden)
         
         if not orden:
             messagebox.showerror("Error", "Orden no encontrada.")
@@ -72,13 +72,13 @@ class InterfazInspecciones(tk.Frame):
         tk.Button(btn_frame, text="Cancelar", command=self.cancelarCierre).pack(side=tk.LEFT)
 
     def tomarObservacion(self):
-        texto = self.text_observacion.get("1.0", tk.END).strip()
+        observacion = self.text_observacion.get("1.0", tk.END).strip()
 
-        if texto == "":
+        if observacion == "":
             messagebox.showwarning("Advertencia", "Debe ingresar una observación de cierre.")
             return
         
-        self.gestor.tomarObservacion(texto)
+        self.gestor.tomarObservacion(observacion)
         self.win_observacion.destroy()
 
     def mostrarMotivosTipo(self, motivos):
@@ -136,7 +136,7 @@ class InterfazInspecciones(tk.Frame):
             self.pedirComentario(motivos, indiceMotivo)
             return
 
-        self.gestor.tomarComentario(indiceMotivo, comentario)
+        self.gestor.tomarComentario(comentario, indiceMotivo)
         self.win_comentario.destroy()
         indiceMotivo += 1
         self.tomarMotivoFueraDeServicio(motivos, indiceMotivo)

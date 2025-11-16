@@ -3,11 +3,12 @@ from data.ordenes import ordenes
 from data.motivos import motivos
 from data.estados import estados
 from data.empleados import empleados
+from abstractas.i_sujeto_notificadores_ordenes import ISujetoNotificadorOrdenes
 from datetime import datetime
 from interfaz.interfaz_notificacion_mail import interfazNotificacionMail
 from interfaz.interfaz_ccrs import interfazCCRS
 
-class GestorInspecciones:
+class GestorInspecciones(ISujetoNotificadorOrdenes):
     def __init__(self, interfaz):
         self.actualizacionSismografo = ""
         self.motivos = []
@@ -16,6 +17,9 @@ class GestorInspecciones:
         self.observacionCierre = ""
         self.fechaHoraActual = ""
         self.interfaz = interfaz
+        self.observadores = []
+        self.dominios = []
+        self.estadoOrden = None
 
         self.empleadoLogueado = self.buscarEmpleadoLogueado()
         ordenesCompRealizadas = self.buscarOrdenesInspeccion()
@@ -37,7 +41,7 @@ class GestorInspecciones:
                     "estacionSismologica": o.obtenerEstacionSismologica(),
                     "sismografoId": o.obtenerIdentificadorSismografo()
                 }
-
+                
                 ordenesSinOrdenar.append(orden)
 
         ordenesOrdenadas = self.ordenarPorFechaDeFinalizacion(ordenesSinOrdenar)
@@ -51,9 +55,9 @@ class GestorInspecciones:
         self.interfaz.mostrarOrdCompRealizadas(ordenes)
         self.interfaz.pedirSeleccionOrdenInspeccion()
 
-    def tomarOrdenDeInspeccionSeleccionada(self, id_orden):
+    def tomarOrdenDeInspeccionSeleccionada(self, idOrden):
         for o in self.ordenes:
-            if o.id == id_orden:
+            if o.id == idOrden:
                 self.ordenSeleccionada = o
                 return o
             
@@ -62,8 +66,8 @@ class GestorInspecciones:
     def pedirObservacion(self):
         self.interfaz.pedirObservacion()
 
-    def tomarObservacion(self, texto):
-        self.observacionCierre = texto
+    def tomarObservacion(self, observacion):
+        self.observacionCierre = observacion
         
         self.buscarTipoMotivoFueraDeServicio()
 
@@ -90,35 +94,39 @@ class GestorInspecciones:
         self.motivos.append({"motivo": motivos[indiceMotivo], "comentario": ""})
         self.interfaz.pedirComentario(motivos, indiceMotivo)
 
-    def tomarComentario(self, indiceMotivo, comentario):
+    def tomarComentario(self, comentario, indiceMotivo):
         self.motivos[indiceMotivo]["comentario"] = comentario
 
     def pedirConfirmacionCierreOrden(self):
         self.interfaz.pedirConfirmacionCierreOrden()
 
     def tomarConfirmacionCierreOrden(self):
-        if self.validarExistenciaObservacion():
-            if self.validarExistenciaMotivoTipo():
-                estadoOrden = self.buscarEstadoCerrada()
+        if self.validarExistenciaObservacion() and self.validarExistenciaMotivoTipo():
+            
+            self.estadoOrden = self.buscarEstadoCerrada()
 
-                self.fechaHoraActual = self.getFechaHoraActual()
+            self.fechaHoraActual = self.getFechaHoraActual()
 
-                estadoSismografo = self.buscarFueraDeServicio()
+            estadoSismografo = self.buscarFueraDeServicio()
 
-                if estadoOrden == None or estadoSismografo == None:
-                    print("Error obteniendo los estados")
-                    return False
-                
-                self.cerrarOrdenInspeccion(estadoOrden)
-                self.ponerSismografoFueraDeServicio(estadoSismografo)
-
-                self.buscarResponsablesReparacion(estadoSismografo)
-
-                self.finCU()
-
-                return True
-            else:
+            if self.estadoOrden == None or estadoSismografo == None:
+                print("Error obteniendo los estados")
                 return False
+            
+            self.cerrarOrdenInspeccion(self.estadoOrden)
+            self.ponerSismografoFueraDeServicio(estadoSismografo)
+            
+            self.buscarResponsablesReparacion()
+
+            observadores = [interfazNotificacionMail, interfazCCRS]
+
+            self.suscribir(observadores)
+
+            self.notificar()
+
+            self.finCU()
+
+            return True
         else:
             return False
     
@@ -145,7 +153,6 @@ class GestorInspecciones:
         ahora = datetime.now()
         return ahora.strftime("%Y-%m-%d %H:%M:%S")
 
-    
     def buscarFueraDeServicio(self):
         for estado in estados:
             if estado.sosDeSismografo() and estado.sosFueraDeServicio():
@@ -159,13 +166,12 @@ class GestorInspecciones:
     def ponerSismografoFueraDeServicio(self, estadoSismografo):
         self.ordenSeleccionada.ponerSismografoFueraDeServicio(self.fechaHoraActual, estadoSismografo, self.empleadoLogueado, self.motivos)
 
-    def buscarResponsablesReparacion(self, estadoSismografo):
-        mail = ""
+    def buscarResponsablesReparacion(self):
         for empleado in empleados:
             if empleado.esResponsableReparacion():
-                mail = empleado.obtenerMail()
-                self.enviarCorreo(mail)
-                self.enviarNotificacion(estadoSismografo)
+                dominio = empleado.obtenerMail()
+                
+                self.dominios.append(dominio)
 
     def enviarCorreo(self,mail):
         interfazNotificacionMail.enviarCorreo(mail)
@@ -178,6 +184,25 @@ class GestorInspecciones:
 
         interfazCCRS.publicarNotificacion(sismografoId, nombreEstado, fecha, motivos )
     
+    def suscribir(self, observadores):
+        self.observadores = observadores
+
+    def notificar(self):
+        for observador in self.observadores:
+            sismografoId = self.ordenSeleccionada.obtenerIdentificadorSismografo()
+            nombreEstado = self.estadoOrden.getNombre()
+
+            observador.actualizar(self.dominios, sismografoId, nombreEstado, self.fechaHoraActual, self.motivos)
+
+    def desuscribir(self, observadores):
+        nuevosObservadores = []
+
+        for observador in self.observadores:
+            if observador not in observadores:
+                nuevosObservadores.append(observador)
+        
+        self.observadores = nuevosObservadores
+
     # Actualizamos el arreglo de ordenes para que la orden cerrada ya no se vea reflejada 😀
     def finCU(self):
         nuevasOrdenes = self.buscarOrdenesInspeccion()
