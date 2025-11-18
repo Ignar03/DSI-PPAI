@@ -1,5 +1,5 @@
 from entidades.estacion_sismologica import EstacionSismologica
-from data.sismografos import sismografos
+from data.old.sismografos import sismografos
 
 estaciones = [
     EstacionSismologica("ES01", "Estación Central", sismografos[0]),

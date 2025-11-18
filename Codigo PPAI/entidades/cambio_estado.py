@@ -1,12 +1,13 @@
 from entidades.motivo_fuera_servicio import MotivoFueraServicio
-from data.motivos import motivos as motivosData
+# from data.old.motivos import motivos as motivosData
 
 class CambioEstado:
-    def __init__(self, estado, fechaHoraInicio, fechaHoraFin, responsable):
-        self.estado = estado
+    def __init__(self,estado, fechaHoraInicio, fechaHoraFin, responsable, codigoCambioEstado=None):
+        self.codigoCambioEstado = codigoCambioEstado
         self.fechaHoraInicio = fechaHoraInicio
         self.fechaHoraFin = fechaHoraFin
         self.responsable = responsable
+        self.estado = estado
         self.motivoFueraServicio = []
 
     def getEstado(self):
@@ -19,7 +20,7 @@ class CambioEstado:
         return self.responsable
     
     def esEstadoActual(self):
-        if self.fechaHoraFin == "":
+        if self.fechaHoraFin == "0":
             return self
         else:
             return None
@@ -27,11 +28,9 @@ class CambioEstado:
     def setFechaHoraActual(self, fechaHoraActual):
         self.fechaHoraFin = fechaHoraActual
     
-    def crearMotivoTipo(self, motivos):
-        
-            
-        for m in motivos:
-            for obj in motivosData:
+    def crearMotivoTipo(self, motivosSeleccionados, motivos):
+        for m in motivosSeleccionados:
+            for obj in motivos:
                 if obj.getDescripcion() == m["motivo"]:
                     motivoSeleccionado = obj
                     break

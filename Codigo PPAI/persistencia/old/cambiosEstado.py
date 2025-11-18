@@ -1,5 +1,5 @@
-from data.estados import estados
-from data.motivos import motivos
+from data.old.estados import estados
+from data.old.motivos import motivos
 from entidades.cambio_estado import CambioEstado
 from datetime import datetime, timedelta
 

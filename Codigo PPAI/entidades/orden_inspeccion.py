@@ -1,17 +1,15 @@
-
 from datetime import datetime
-from .cambio_estado import CambioEstado
 
 class OrdenDeInspeccion:
-    def __init__(self, id, estado, empleado, estacion, fechaFinalizacion):
-        self.id = id
+    def __init__(self, numeroOrden, fechaHoraInicio, fechaHoraCierre, fechaHoraFinalizacion, observacionCierre, estado, empleado, estacion):
+        self.id = numeroOrden
+        self.fechaInicio = fechaHoraInicio
+        self.fechaCierre = fechaHoraCierre
+        self.fechaFinalizacion = fechaHoraFinalizacion
+        self.observacionCierre = observacionCierre
         self.estado = estado
         self.empleado = empleado
         self.estacion = estacion
-        self.observacion = ""
-        self.motivosCierre = []
-        self.fechaFinalizacion = fechaFinalizacion
-        self.fechaCierre = None
         
     def sosDeEmpleado(self, legajo):
         return self.empleado.getLegajo() == legajo
@@ -25,8 +23,8 @@ class OrdenDeInspeccion:
     def obtenerEstacionSismologica(self):
         return self.estacion.getNombre()
     
-    def obtenerIdentificadorSismografo(self):
-        return self.estacion.obtenerIdentificadorSismografo()
+    def obtenerIdentificadorSismografo(self, sismografos):
+        return self.estacion.obtenerIdentificadorSismografo(sismografos)
 
     def sosCompletamenteRealizada(self):
         return self.estado.getNombre() == "Completamente Realizada"
@@ -50,5 +48,5 @@ class OrdenDeInspeccion:
         # self.historialEstados.append(cambio)
         pass
 
-    def ponerSismografoFueraDeServicio(self, fechaHoraActual, estadoSismografo, empleadoLogueado, motivos):
-        self.estacion.ponerSismografoFueraDeServicio(fechaHoraActual, estadoSismografo, empleadoLogueado, motivos)
+    def ponerSismografoFueraDeServicio(self, fechaHoraActual, estadoSismografo, usuario, motivos, motivosSeleccionados, sismografos):
+        self.estacion.ponerSismografoFueraDeServicio(fechaHoraActual, estadoSismografo, usuario, motivos, motivosSeleccionados, sismografos)

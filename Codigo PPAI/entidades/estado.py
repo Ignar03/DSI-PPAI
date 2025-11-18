@@ -1,5 +1,6 @@
 class Estado:
-    def __init__(self, ambito, nombre):
+    def __init__(self, codigoEstado, ambito, nombre):
+        self.codigoEstado = codigoEstado
         self.ambito = ambito
         self.nombre = nombre
 
@@ -20,3 +21,6 @@ class Estado:
 
     def getNombre(self):
         return self.nombre
+    
+    def getCodigo(self):
+        return self.codigoEstado

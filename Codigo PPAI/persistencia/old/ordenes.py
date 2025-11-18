@@ -1,7 +1,7 @@
 from entidades.orden_inspeccion import OrdenDeInspeccion
-from data.empleados import empleados
-from data.estados import estados
-from data.estacionesSismologicas import estaciones
+from data.old.empleados import empleados
+from data.old.estados import estados
+from data.old.estacionesSismologicas import estaciones
 import datetime
 
 # Por ahora lo hard-codeamos a falta de una base de datos

@@ -1,4 +1,3 @@
-
 class Empleado:
     # Entidad Empleado del diagrama de secuencia
     def __init__(self, legajo, apellido, nombre, mail, telefono, rol):

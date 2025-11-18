@@ -1,17 +1,17 @@
 import datetime
 
 class Sesion:
-    def __init__(self, idSesion, usuario):
-        self.idSesion = idSesion
+    def __init__(self, codigoSesion, usuario, fechaInicio, fechaFin= None):
+        self.codigoSesion = codigoSesion
         self.usuario = usuario
-        self.fechaInicioSesion = datetime.datetime.now()
-        self.fechaFinSesion = None
+        self.fechaInicio = fechaInicio
+        self.fechaFin = fechaFin
 
     def getUsuarioActual(self):
         return self.usuario
     
     def getFecha(self):
-        return self.fechaInicioSesion
+        return self.fechaInicio
 
     def cerrarSesion(self):
-        self.fechaFinSesion = datetime.datetime.now()
+        self.fechaFin = datetime.datetime.now()

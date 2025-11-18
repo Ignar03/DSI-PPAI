@@ -5,29 +5,108 @@ from gestor.gestor_inspecciones import GestorInspecciones
 
 class InterfazInspecciones(tk.Frame):
     def __init__(self, app):
-        super().__init__(app)
+        super().__init__(app, bg="#f5f5f5")
         
         self.habilitarVentana()
         
         self.gestor = GestorInspecciones(self)
 
     def habilitarVentana(self):
+        # Configurar peso de filas y columnas para responsive
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        
+        # === ENCABEZADO NARANJA CON IMAGEN ===
+        header_frame = tk.Frame(self, bg="#FF8C42", height=100)
+        header_frame.grid(row=0, column=0, sticky="ew")
+        header_frame.grid_propagate(False)
+        
+        # Cargar logo en ambos lados
+        try:
+            logo = tk.PhotoImage(file="assets/img/Logo.png")
+            logo = logo.subsample(3, 3)
+            
+            logo_label_left = tk.Label(header_frame, image=logo, bg="#FF8C42")
+            logo_label_left.image = logo
+            logo_label_left.pack(side=tk.LEFT, padx=20)
+            
+            logo_label_right = tk.Label(header_frame, image=logo, bg="#FF8C42")
+            logo_label_right.image = logo
+            logo_label_right.pack(side=tk.RIGHT, padx=20)
+        except:
+            pass
+        
+        label = tk.Label(header_frame, text="📋 Órdenes de Inspección", 
+                        font=("Arial", 22, "bold"), bg="#FF8C42", fg="white")
+        label.pack(expand=True)
 
-        label = tk.Label(self, text="Ordenes de Inspección", font=("Arial", 18))
-        label.pack(pady=20)
+        # === CONTENEDOR PRINCIPAL ===
+        main_frame = tk.Frame(self, bg="#f5f5f5")
+        main_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=20)
+        main_frame.grid_rowconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
 
-        self.list_ordenesInspeccion = ttk.Treeview(self, columns=("ID", "Fecha", "Estacion", "Sismografo"), show="headings")
+        # === ESTILO PERSONALIZADO PARA TREEVIEW ===
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure("Custom.Treeview",
+                       background="#ffffff",
+                       foreground="#333333",
+                       rowheight=30,
+                       fieldbackground="#ffffff",
+                       borderwidth=0)
+        style.configure("Custom.Treeview.Heading",
+                       background="#FF8C42",
+                       foreground="white",
+                       font=("Arial", 10, "bold"),
+                       borderwidth=0)
+        style.map("Custom.Treeview",
+                 background=[("selected", "#FFB380")])
+
+        # === FRAME PARA TABLA Y SCROLLBAR ===
+        table_frame = tk.Frame(main_frame, bg="#f5f5f5")
+        table_frame.grid(row=0, column=0, sticky="nsew", pady=(0, 20))
+        table_frame.grid_rowconfigure(0, weight=1)
+        table_frame.grid_columnconfigure(0, weight=1)
+
+        # === TABLA DE ÓRDENES ===
+        self.list_ordenesInspeccion = ttk.Treeview(
+            table_frame, 
+            columns=("ID", "Fecha", "Estacion", "Sismografo"), 
+            show="headings",
+            style="Custom.Treeview"
+        )
         self.list_ordenesInspeccion.heading("ID", text="ID Orden", anchor="center")
         self.list_ordenesInspeccion.heading("Fecha", text="Fecha Finalización", anchor="center")
         self.list_ordenesInspeccion.heading("Estacion", text="Estación Sismológica", anchor="center")
         self.list_ordenesInspeccion.heading("Sismografo", text="Sismógrafo", anchor="center")
-        self.list_ordenesInspeccion.column("ID", anchor="center", width=70)
-        self.list_ordenesInspeccion.column("Fecha", anchor="center", width=200)
-        self.list_ordenesInspeccion.column("Estacion", anchor="center", width=200)
-        self.list_ordenesInspeccion.column("Sismografo", anchor="center", width=90)
-        self.list_ordenesInspeccion.pack(padx=10, pady=10, fill=tk.X)
-        self.btn_seleccionarOrden = tk.Button(self, text="Cerrar orden seleccionada", command=self.tomarSeleccionOrdenInspeccion)
-        self.btn_seleccionarOrden.pack(pady=10)
+        self.list_ordenesInspeccion.column("ID", anchor="center", width=80, minwidth=60)
+        self.list_ordenesInspeccion.column("Fecha", anchor="center", width=180, minwidth=120)
+        self.list_ordenesInspeccion.column("Estacion", anchor="center", width=250, minwidth=150)
+        self.list_ordenesInspeccion.column("Sismografo", anchor="center", width=100, minwidth=80)
+        self.list_ordenesInspeccion.grid(row=0, column=0, sticky="nsew")
+
+        # === SCROLLBAR ===
+        scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.list_ordenesInspeccion.yview)
+        self.list_ordenesInspeccion.configure(yscrollcommand=scrollbar.set)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # === BOTÓN MEJORADO (Con respecto al anterior) ===
+        self.btn_seleccionarOrden = tk.Button(
+            main_frame, 
+            text="✓ Cerrar Orden Seleccionada", 
+            command=self.tomarSeleccionOrdenInspeccion,
+            bg="#FF8C42",
+            fg="white",
+            font=("Arial", 12, "bold"),
+            relief=tk.FLAT,
+            padx=30,
+            pady=12,
+            cursor="hand2",
+            activebackground="#FF7526",
+            activeforeground="white"
+        )
+        self.btn_seleccionarOrden.grid(row=1, column=0, pady=10)
 
     def mostrarOrdCompRealizadas(self, ordenes):
         self.list_ordenesInspeccion.delete(*self.list_ordenesInspeccion.get_children())
@@ -36,8 +115,8 @@ class InterfazInspecciones(tk.Frame):
             self.list_ordenesInspeccion.insert("", "end", values=(orden["id"], orden["fechaFinalizacion"], orden["estacionSismologica"], orden["sismografoId"]))
 
     def pedirSeleccionOrdenInspeccion(self):
-        label = tk.Label(self, text="*Por favor seleccione una orden*", font=("Arial", 9), fg="#FF0000")
-        label.pack(pady=20)
+        label = tk.Label(self, text="⚠ Por favor seleccione una orden", font=("Arial", 10), fg="#FF0000", bg="#f5f5f5")
+        label.grid(row=2, column=0, pady=20)
 
     def tomarSeleccionOrdenInspeccion(self):
         seleccion = self.list_ordenesInspeccion.selection()
@@ -61,15 +140,36 @@ class InterfazInspecciones(tk.Frame):
     def pedirObservacion(self):
         self.win_observacion = tk.Toplevel(self)
         self.win_observacion.title("Observación de cierre")
-        self.win_observacion.geometry("500x250")
+        self.win_observacion.geometry("550x300")
+        self.win_observacion.configure(bg="#f5f5f5")
         self.win_observacion.grab_set()
-        tk.Label(self.win_observacion, text="Ingrese observación de cierre:").pack(pady=10)
-        self.text_observacion = tk.Text(self.win_observacion, width=60, height=6)
+        
+        # Header de la ventana
+        header = tk.Frame(self.win_observacion, bg="#FF8C42", height=60)
+        header.pack(fill=tk.X)
+        header.pack_propagate(False)
+        tk.Label(header, text="📝 Observación de Cierre", font=("Arial", 14, "bold"), 
+                bg="#FF8C42", fg="white").pack(pady=15)
+        
+        content = tk.Frame(self.win_observacion, bg="#f5f5f5")
+        content.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        tk.Label(content, text="Ingrese observación de cierre:", 
+                font=("Arial", 10), bg="#f5f5f5").pack(pady=(0, 10), anchor="w")
+        
+        self.text_observacion = tk.Text(content, width=60, height=6, font=("Arial", 10),
+                                       relief=tk.SOLID, borderwidth=1)
         self.text_observacion.pack(pady=5)
-        btn_frame = tk.Frame(self.win_observacion)
-        btn_frame.pack(pady=10)
-        tk.Button(btn_frame, text="Aceptar", command=self.tomarObservacion).pack(side=tk.LEFT, padx=10)
-        tk.Button(btn_frame, text="Cancelar", command=self.cancelarCierre).pack(side=tk.LEFT)
+        
+        btn_frame = tk.Frame(content, bg="#f5f5f5")
+        btn_frame.pack(pady=20)
+        
+        tk.Button(btn_frame, text="✓ Aceptar", command=self.tomarObservacion,
+                 bg="#4CAF50", fg="white", font=("Arial", 10, "bold"),
+                 padx=20, pady=8, relief=tk.FLAT, cursor="hand2").pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="✕ Cancelar", command=self.cancelarCierre,
+                 bg="#f44336", fg="white", font=("Arial", 10, "bold"),
+                 padx=20, pady=8, relief=tk.FLAT, cursor="hand2").pack(side=tk.LEFT)
 
     def tomarObservacion(self):
         observacion = self.text_observacion.get("1.0", tk.END).strip()
@@ -83,19 +183,41 @@ class InterfazInspecciones(tk.Frame):
 
     def mostrarMotivosTipo(self, motivos):
         self.win_motivos = tk.Toplevel(self)
-        self.win_motivos.title(f"Motivos de cierre para la orden")
-        self.win_motivos.geometry("500x400")
+        self.win_motivos.title(f"Motivos de cierre")
+        self.win_motivos.geometry("600x450")
+        self.win_motivos.configure(bg="#f5f5f5")
         self.win_motivos.grab_set()
-        tk.Label(self.win_motivos, text="Seleccione uno o varios motivos para poner fuera de servicio:").pack(pady=10)
-        self.list_motivos = tk.Listbox(self.win_motivos, selectmode=tk.MULTIPLE, width=60, height=10)
+        
+        # Header
+        header = tk.Frame(self.win_motivos, bg="#FF8C42", height=60)
+        header.pack(fill=tk.X)
+        header.pack_propagate(False)
+        tk.Label(header, text="🔧 Motivos de Cierre", font=("Arial", 14, "bold"), 
+                bg="#FF8C42", fg="white").pack(pady=15)
+        
+        content = tk.Frame(self.win_motivos, bg="#f5f5f5")
+        content.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        tk.Label(content, text="Seleccione uno o varios motivos para poner fuera de servicio:",
+                font=("Arial", 10), bg="#f5f5f5").pack(pady=(0, 10), anchor="w")
+        
+        self.list_motivos = tk.Listbox(content, selectmode=tk.MULTIPLE, width=70, height=12,
+                                       font=("Arial", 10), relief=tk.SOLID, borderwidth=1)
         for motivo in motivos:
             self.list_motivos.insert(tk.END, motivo)
 
-        self.list_motivos.pack(pady=10)
-        btn_frame = tk.Frame(self.win_motivos)
+        self.list_motivos.pack(pady=10, fill=tk.BOTH, expand=True)
+        
+        btn_frame = tk.Frame(content, bg="#f5f5f5")
         btn_frame.pack(pady=10)
-        tk.Button(btn_frame, text="Aceptar", command=lambda: self.gestor.solicitarSeleccionMotivoFueraDeServicio(motivos)).pack(side=tk.LEFT, padx=10)
-        tk.Button(btn_frame, text="Cancelar", command=self.cancelarCierre).pack(side=tk.LEFT)
+        
+        tk.Button(btn_frame, text="✓ Aceptar", 
+                 command=lambda: self.gestor.solicitarSeleccionMotivoFueraDeServicio(motivos),
+                 bg="#4CAF50", fg="white", font=("Arial", 10, "bold"),
+                 padx=20, pady=8, relief=tk.FLAT, cursor="hand2").pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="✕ Cancelar", command=self.cancelarCierre,
+                 bg="#f44336", fg="white", font=("Arial", 10, "bold"),
+                 padx=20, pady=8, relief=tk.FLAT, cursor="hand2").pack(side=tk.LEFT)
 
     def solicitarSeleccionMotivoFueraDeServicio(self, motivos, indiceMotivo):
         seleccion_indices = self.list_motivos.curselection()
@@ -114,23 +236,44 @@ class InterfazInspecciones(tk.Frame):
         
     def pedirComentario(self, motivos, indiceMotivo):
         self.win_comentario = tk.Toplevel(self)
-        self.win_comentario.title(f"Comentario para motivo: {motivos[indiceMotivo]}")
-        self.win_comentario.geometry("500x250")
+        self.win_comentario.title(f"Comentario para motivo")
+        self.win_comentario.geometry("550x300")
+        self.win_comentario.configure(bg="#f5f5f5")
         self.win_comentario.grab_set()
-        tk.Label(self.win_comentario, text=f"Ingrese comentario para el motivo:'{motivos[indiceMotivo]}'").pack(pady=10)
-        self.txt_comentarioMotivoDeCierre = tk.Text(self.win_comentario, width=60, height=6)
+        
+        # Header
+        header = tk.Frame(self.win_comentario, bg="#FF8C42", height=60)
+        header.pack(fill=tk.X)
+        header.pack_propagate(False)
+        tk.Label(header, text="💬 Comentario del Motivo", font=("Arial", 14, "bold"), 
+                bg="#FF8C42", fg="white").pack(pady=15)
+        
+        content = tk.Frame(self.win_comentario, bg="#f5f5f5")
+        content.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        tk.Label(content, text=f"Ingrese comentario para: '{motivos[indiceMotivo]}'",
+                font=("Arial", 10), bg="#f5f5f5", wraplength=500).pack(pady=(0, 10), anchor="w")
+        
+        self.txt_comentarioMotivoDeCierre = tk.Text(content, width=60, height=6, 
+                                                    font=("Arial", 10), relief=tk.SOLID, borderwidth=1)
         self.txt_comentarioMotivoDeCierre.pack(pady=5)
-        btn_frame = tk.Frame(self.win_comentario)
-        btn_frame.pack(pady=10)
-        tk.Button(btn_frame, text="Guardar y siguiente", command=lambda: self.tomarComentario(motivos, indiceMotivo)).pack(side=tk.LEFT, padx=10)
-        tk.Button(btn_frame, text="Cancelar", command=self.cancelarCierre).pack(side=tk.LEFT)
+        
+        btn_frame = tk.Frame(content, bg="#f5f5f5")
+        btn_frame.pack(pady=20)
+        
+        tk.Button(btn_frame, text="→ Guardar y Siguiente", 
+                 command=lambda: self.tomarComentario(motivos, indiceMotivo),
+                 bg="#2196F3", fg="white", font=("Arial", 10, "bold"),
+                 padx=20, pady=8, relief=tk.FLAT, cursor="hand2").pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="✕ Cancelar", command=self.cancelarCierre,
+                 bg="#f44336", fg="white", font=("Arial", 10, "bold"),
+                 padx=20, pady=8, relief=tk.FLAT, cursor="hand2").pack(side=tk.LEFT)
 
     def tomarComentario(self, motivos, indiceMotivo):
         comentario = self.txt_comentarioMotivoDeCierre.get("1.0", tk.END).strip()
         
-        # Validamos aca por una mejor UX 🙏🙏
         if comentario == "":
-            messagebox.showwarning("Advertencia", "Debe seleccionar al menos un comentario.")
+            messagebox.showwarning("Advertencia", "Debe ingresar un comentario.")
             self.win_comentario.destroy()
             
             self.pedirComentario(motivos, indiceMotivo)
@@ -157,7 +300,7 @@ class InterfazInspecciones(tk.Frame):
         cerrada = self.gestor.tomarConfirmacionCierreOrden()
 
         if cerrada:
-            messagebox.showinfo("Éxito", "Orden cerrada con éxito. \n\nMails y notificaciones enviadas a los monitores CCRS.")
+            messagebox.showinfo("Éxito", "Orden cerrada con éxito.\n\n✉ Mails y notificaciones enviadas a los monitores CCRS.")
         else:
             messagebox.showerror("Error", "Error al cerrar la orden.")
 

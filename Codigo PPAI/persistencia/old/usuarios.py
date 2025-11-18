@@ -1,6 +1,6 @@
 from entidades.usuario import Usuario
 from entidades.empleado import Empleado
-from data.empleados import empleados
+from data.old.empleados import empleados
 
 # Por ahora lo hard-codeamos a falta de una base de datos
 usuarios = [

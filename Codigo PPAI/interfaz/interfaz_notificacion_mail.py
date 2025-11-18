@@ -16,6 +16,7 @@ class InterfazNotificacionMail(IObservadorNotificacionOrdenes):
         self.fechaHoraActual = fechaHoraActual
         self.motivos = motivos
         
+        print(dominios)
         for dominio in dominios:
             self.dominio = dominio
             self.enviarCorreo()
